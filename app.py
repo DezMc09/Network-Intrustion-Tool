@@ -2,7 +2,15 @@ import streamlit as st
 import pandas as pd
 import pickle
 import matplotlib.pyplot as plt
+import numpy as np
 
+probs = model.predict_proba(df)
+confidence = np.max(probs, axis=1)
+
+df["Confidence"] = confidence
+
+st.subheader("Predictions with Confidence")
+st.dataframe(df.head())
 # Load files
 with open("model_small.pkl", "rb") as f:
     model = pickle.load(f)
@@ -75,7 +83,16 @@ if input_method == "CSV Upload":
 
             csv = results_df.to_csv(index=False).encode("utf-8")
             st.download_button("Download Results", csv, "results.csv", "text/csv")
+y_pred = model.predict(df)
 
+# Convert numbers back to attack names
+y_pred_labels = label_encoder.inverse_transform(y_pred)
+
+# Add to dataframe
+df["Predicted_Label"] = y_pred_labels
+
+st.subheader("Predictions with Labels")
+st.dataframe(df.head())
 elif input_method == "Manual Entry":
     st.subheader("Manual Feature Entry")
     st.write("Enter a few feature values. Any feature not shown will default to 0.")
