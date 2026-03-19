@@ -4,7 +4,7 @@ import pickle
 import matplotlib.pyplot as plt
 
 # Load files
-with open("model.pkl", "rb") as f:
+with open("model_small.pkl", "rb") as f:
     model = pickle.load(f)
 
 with open("label_encoder.pkl", "rb") as f:
