@@ -4,13 +4,6 @@ import pickle
 import matplotlib.pyplot as plt
 import numpy as np
 
-probs = model.predict_proba(df)
-confidence = np.max(probs, axis=1)
-
-df["Confidence"] = confidence
-
-st.subheader("Predictions with Confidence")
-st.dataframe(df.head())
 # Load files
 with open("model_small.pkl", "rb") as f:
     model = pickle.load(f)
@@ -55,25 +48,25 @@ if input_method == "CSV Upload":
             labels = label_encoder.inverse_transform(predictions)
 
             results_df = df.copy()
-            results_df["Prediction"] = labels
+            results_df["Predicted_Label"] = labels
 
             if hasattr(model, "predict_proba"):
                 probs = model.predict_proba(df_features)
-                results_df["Confidence"] = probs.max(axis=1)
+                results_df["Confidence"] = np.max(probs, axis=1)
                 results_df["Risk_Level"] = results_df["Confidence"].apply(get_risk_level)
 
             st.subheader("Predictions")
             st.dataframe(results_df.head(20))
 
             total_records = len(results_df)
-            suspicious = (results_df["Prediction"].str.lower() != "benign").sum()
+            suspicious = (results_df["Predicted_Label"].str.lower() != "benign").sum()
 
             col1, col2 = st.columns(2)
             col1.metric("Total Records", total_records)
             col2.metric("Suspicious Records", suspicious)
 
             st.subheader("Attack Distribution")
-            counts = results_df["Prediction"].value_counts().head(15)
+            counts = results_df["Predicted_Label"].value_counts().head(15)
 
             fig, ax = plt.subplots(figsize=(10, 5))
             counts.plot(kind="bar", ax=ax)
@@ -83,21 +76,11 @@ if input_method == "CSV Upload":
 
             csv = results_df.to_csv(index=False).encode("utf-8")
             st.download_button("Download Results", csv, "results.csv", "text/csv")
-y_pred = model.predict(df)
 
-# Convert numbers back to attack names
-y_pred_labels = label_encoder.inverse_transform(y_pred)
-
-# Add to dataframe
-df["Predicted_Label"] = y_pred_labels
-
-st.subheader("Predictions with Labels")
-st.dataframe(df.head())
 elif input_method == "Manual Entry":
     st.subheader("Manual Feature Entry")
     st.write("Enter a few feature values. Any feature not shown will default to 0.")
 
-    # Beginner-friendly manual fields
     flow_duration = st.number_input("flow_duration", min_value=0.0, value=0.0)
     header_length = st.number_input("Header_Length", min_value=0.0, value=0.0)
     protocol_type = st.number_input("Protocol Type", min_value=0.0, value=0.0)
@@ -112,7 +95,6 @@ elif input_method == "Manual Entry":
     if st.button("Predict"):
         input_data = {col: 0 for col in feature_columns}
 
-        # Only fill columns that exist in your trained feature list
         if "flow_duration" in input_data:
             input_data["flow_duration"] = flow_duration
         if "Header_Length" in input_data:
